@@ -1,0 +1,102 @@
+namespace: elasticsearch
+
+base:
+  defines: runnable
+
+  metadata:
+    name: "Elasticsearch"
+    description: "Reusable Elasticsearch node component with persistent storage, configurable heap sizing, single-node discovery defaults, and internal HTTP/transport services for application composition."
+    tags: "elasticsearch, search, datastore, dependency"
+
+  variables:
+    image-tag:
+      type: string
+      value: "8.19.16"
+      description: "Docker Hub elastic/elasticsearch image tag to run."
+    cluster-name:
+      type: string
+      value: "monk-elasticsearch"
+      description: "Elasticsearch cluster name advertised by the node."
+      env: cluster.name
+    node-name:
+      type: string
+      value: "monk-es-01"
+      description: "Elasticsearch node name advertised by the container."
+      env: node.name
+    discovery-type:
+      type: string
+      value: "single-node"
+      description: "Discovery mode; single-node is suitable for this base component and inherited examples."
+      env: discovery.type
+    security-enabled:
+      type: bool
+      value: false
+      description: "Enable Elasticsearch security. Production inheritors should set this to true and provide elastic-password from secret(\"elastic-password\")."
+      env: xpack.security.enabled
+    http-ssl-enabled:
+      type: bool
+      value: false
+      description: "Enable HTTPS on the Elasticsearch HTTP API. Defaults to false so local examples can be checked with plain HTTP."
+      env: xpack.security.http.ssl.enabled
+    elastic-password:
+      type: string
+      value: ""
+      description: "Sensitive: bootstrap password for the elastic user. Inheriting secure templates must override this with secret(\"elastic-password\")."
+      env: ELASTIC_PASSWORD
+    heap-size:
+      type: string
+      value: "512m"
+      description: "Elasticsearch JVM heap size used for both Xms and Xmx."
+    java-opts:
+      type: string
+      value: <- `-Xms${heap-size} -Xmx${heap-size}`
+      description: "Computed JVM options exported to Elasticsearch."
+      env: ES_JAVA_OPTS
+    http-port:
+      type: int
+      value: 9200
+      description: "Container port for the Elasticsearch HTTP API."
+    transport-port:
+      type: int
+      value: 9300
+      description: "Container port for the Elasticsearch transport protocol."
+    data-path:
+      type: string
+      value: <- `${monk-volume-path}/elasticsearch/data`
+      description: "Host-side persistent data directory managed under Monk's volume path."
+
+  containers:
+    elasticsearch:
+      image: elastic/elasticsearch
+      image-tag: <- $image-tag
+      restart: unless-stopped
+      stop-signal: SIGTERM
+      stop-grace-period: 120s
+      memory: 1073741824
+      ports: []
+      paths:
+        - <- `${data-path}:/usr/share/elasticsearch/data`
+      ulimits:
+        nofile:
+          soft: 65535
+          hard: 65535
+        memlock:
+          soft: -1
+          hard: -1
+      logs:
+        quota: "100M"
+        count: 5
+
+  services:
+    http:
+      description: "Internal Elasticsearch HTTP API service for clients connected through Monk."
+      container: elasticsearch
+      port: <- $http-port
+      protocol: tcp
+      publish: false
+    transport:
+      description: "Internal Elasticsearch transport service used by Elasticsearch nodes and compatible clients."
+      container: elasticsearch
+      port: <- $transport-port
+      protocol: tcp
+      publish: false

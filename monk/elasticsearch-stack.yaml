@@ -1,0 +1,105 @@
+namespace: elasticsearch
+
+stack:
+  defines: runnable
+  inherits: elasticsearch/base
+
+  metadata:
+    name: "Elasticsearch Standalone Stack"
+    description: "Production-oriented standalone Elasticsearch stack with security enabled, persistent storage, bounded logs, JVM heap sizing, and no locally published service ports."
+    tags: "elasticsearch, standalone, production, secure"
+
+  permitted-secrets:
+    elastic-password: true
+
+  variables:
+    cluster-name:
+      type: string
+      value: "monk-elasticsearch-stack"
+      description: "Cluster name for the standalone production stack."
+      env: cluster.name
+    security-enabled:
+      type: bool
+      value: true
+      description: "Enable Elasticsearch security for the standalone stack."
+      env: xpack.security.enabled
+    elastic-password:
+      type: string
+      value: <- secret("elastic-password")
+      description: "Sensitive: elastic user bootstrap password read from the plain secret name elastic-password."
+      env: ELASTIC_PASSWORD
+    heap-size:
+      type: string
+      value: "512m"
+      description: "Default JVM heap size used for both Xms and Xmx; inheritors can raise this with a matching container memory limit."
+    data-path:
+      type: string
+      value: <- `${monk-volume-path}/elasticsearch-stack/data`
+      description: "Host-side persistent data directory for the standalone production stack."
+
+  services:
+    http:
+      description: "Authenticated internal Elasticsearch HTTP API service for production clients connected through Monk."
+      container: elasticsearch
+      port: <- $http-port
+      protocol: tcp
+      publish: false
+    transport:
+      description: "Internal Elasticsearch transport service for production node/client communication."
+      container: elasticsearch
+      port: <- $transport-port
+      protocol: tcp
+      publish: false
+
+stack-local:
+  defines: runnable
+  inherits: elasticsearch/stack
+
+  metadata:
+    name: "Elasticsearch Local Stack"
+    description: "Local verification flavor of the standalone stack that disables security and publishes a non-privileged localhost HTTP port because Monk ingress is not available on local targets."
+    tags: "elasticsearch, standalone, local, verification"
+
+  variables:
+    cluster-name:
+      type: string
+      value: "monk-elasticsearch-local"
+      description: "Cluster name for the local verification flavor."
+      env: cluster.name
+    security-enabled:
+      type: bool
+      value: false
+      description: "Disable Elasticsearch security only for local smoke testing."
+      env: xpack.security.enabled
+    elastic-password:
+      type: string
+      value: ""
+      description: "Sensitive: intentionally empty for local smoke testing with security disabled; secure inheritors must use secret(\"elastic-password\")."
+      env: ELASTIC_PASSWORD
+    heap-size:
+      type: string
+      value: "512m"
+      description: "Reduced JVM heap size for local verification."
+    data-path:
+      type: string
+      value: <- `${monk-volume-path}/elasticsearch-stack-local/data`
+      description: "Host-side persistent data directory for the local verification flavor."
+    external-http-port:
+      type: int
+      value: 19201
+      description: "Non-privileged localhost port published for local external HTTP verification."
+
+  services:
+    http:
+      description: "Local Elasticsearch HTTP API endpoint published for external smoke tests."
+      container: elasticsearch
+      port: <- $http-port
+      protocol: tcp
+      publish: true
+      host-port: <- $external-http-port
+    transport:
+      description: "Internal Elasticsearch transport service retained for local composed clients."
+      container: elasticsearch
+      port: <- $transport-port
+      protocol: tcp
+      publish: false
