@@ -1,0 +1,40 @@
+namespace: elasticsearch
+
+example:
+  defines: runnable
+  inherits: elasticsearch/base
+
+  metadata:
+    name: "Elasticsearch Dependency Example"
+    description: "Example dependency template that inherits the reusable Elasticsearch component and exposes only a local host port for validation or local application development."
+    tags: "elasticsearch, example, dependency, local"
+
+  variables:
+    cluster-name:
+      type: string
+      value: "monk-elasticsearch-example"
+      description: "Cluster name for the dependency example."
+      env: cluster.name
+    data-path:
+      type: string
+      value: <- `${monk-volume-path}/elasticsearch-example/data`
+      description: "Host-side persistent data directory for the dependency example."
+    external-http-port:
+      type: int
+      value: 19200
+      description: "Non-privileged localhost port published for validating the dependency example."
+
+  services:
+    http:
+      description: "Local Elasticsearch HTTP API endpoint published for example validation."
+      container: elasticsearch
+      port: <- $http-port
+      protocol: tcp
+      publish: true
+      host-port: <- $external-http-port
+    transport:
+      description: "Internal transport endpoint retained for clients that connect through Monk."
+      container: elasticsearch
+      port: <- $transport-port
+      protocol: tcp
+      publish: false

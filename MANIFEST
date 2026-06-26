@@ -1,0 +1,5 @@
+LOAD monk/elasticsearch.yaml
+LOAD monk/elasticsearch-example.yaml
+LOAD monk/elasticsearch-stack.yaml
+
+ENTRY elasticsearch/stack-local
