@@ -60,10 +60,10 @@ base:
       type: int
       value: 9300
       description: "Container port for the Elasticsearch transport protocol."
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/elasticsearch/data`
-      description: "Host-side persistent data directory managed under Monk's volume path."
+
+  volumes:
+    es-data:
+      kind: local
 
   containers:
     elasticsearch:
@@ -74,8 +74,9 @@ base:
       stop-grace-period: 120s
       memory: 1073741824
       ports: []
-      paths:
-        - <- `${data-path}:/usr/share/elasticsearch/data`
+      mounted-volumes:
+        es-data:
+          path: /usr/share/elasticsearch/data
       ulimits:
         nofile:
           soft: 65535
