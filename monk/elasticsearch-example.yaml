@@ -26,7 +26,6 @@ example:
       container: elasticsearch
       port: <- $http-port
       protocol: tcp
-      publish: true
       host-port: <- $external-http-port
     transport:
       description: "Internal transport endpoint retained for clients that connect through Monk."
