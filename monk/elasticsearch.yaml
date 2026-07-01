@@ -73,7 +73,6 @@ base:
       stop-signal: SIGTERM
       stop-grace-period: 120s
       memory: 1073741824
-      ports: []
       mounted-volumes:
         es-data:
           path: /usr/share/elasticsearch/data
