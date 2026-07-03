@@ -32,10 +32,6 @@ stack:
       type: string
       value: "512m"
       description: "Default JVM heap size used for both Xms and Xmx; inheritors can raise this with a matching container memory limit."
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/elasticsearch-stack/data`
-      description: "Host-side persistent data directory for the standalone production stack."
 
   services:
     http:
@@ -80,10 +76,6 @@ stack-local:
       type: string
       value: "512m"
       description: "Reduced JVM heap size for local verification."
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/elasticsearch-stack-local/data`
-      description: "Host-side persistent data directory for the local verification flavor."
     external-http-port:
       type: int
       value: 19201
@@ -95,7 +87,6 @@ stack-local:
       container: elasticsearch
       port: <- $http-port
       protocol: tcp
-      publish: true
       host-port: <- $external-http-port
     transport:
       description: "Internal Elasticsearch transport service retained for local composed clients."

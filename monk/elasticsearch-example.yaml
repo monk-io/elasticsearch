@@ -15,10 +15,6 @@ example:
       value: "monk-elasticsearch-example"
       description: "Cluster name for the dependency example."
       env: cluster.name
-    data-path:
-      type: string
-      value: <- `${monk-volume-path}/elasticsearch-example/data`
-      description: "Host-side persistent data directory for the dependency example."
     external-http-port:
       type: int
       value: 19200
@@ -30,7 +26,6 @@ example:
       container: elasticsearch
       port: <- $http-port
       protocol: tcp
-      publish: true
       host-port: <- $external-http-port
     transport:
       description: "Internal transport endpoint retained for clients that connect through Monk."
